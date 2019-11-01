@@ -68,7 +68,7 @@ EOF
   }
 }
 
-resource "aws_api_gateway_method_response" "200" {
+resource "aws_api_gateway_method_response" "twohundred" {
   rest_api_id = "${aws_api_gateway_rest_api.mtastspolicyapi.id}"
   resource_id = "${aws_api_gateway_resource.policyresource.id}"
   http_method = "${aws_api_gateway_method.method.http_method}"
@@ -79,7 +79,7 @@ resource "aws_api_gateway_integration_response" "integrationresponse" {
   rest_api_id = "${aws_api_gateway_rest_api.mtastspolicyapi.id}"
   resource_id = "${aws_api_gateway_resource.policyresource.id}"
   http_method = "${aws_api_gateway_method.method.http_method}"
-  status_code = "${aws_api_gateway_method_response.200.status_code}"
+  status_code = "${aws_api_gateway_method_response.twohundred.status_code}"
 
   # Transforms the backend JSON response to XML
   response_templates {
