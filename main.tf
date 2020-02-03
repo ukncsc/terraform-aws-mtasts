@@ -6,6 +6,7 @@ locals {
 resource "aws_acm_certificate" "cert" {
   domain_name       = local.policydomain
   validation_method = "DNS"
+  tags              = var.tags
 }
 
 data "aws_route53_zone" "zone" {
@@ -31,6 +32,7 @@ resource "aws_api_gateway_rest_api" "mtastspolicyapi" {
   endpoint_configuration {
     types = ["REGIONAL"]
   }
+  tags = var.tags
 }
 
 resource "aws_api_gateway_resource" "wellknownresource" {

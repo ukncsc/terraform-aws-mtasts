@@ -31,3 +31,8 @@ variable "reporting_email" {
   description = "(Optional) Email to use for TLS-RPT reporting."
 }
 
+variable "tags" {
+  type        = map(string)
+  default     = {}
+  description = "(Optional) tags to apply to underlying resources"
+}
