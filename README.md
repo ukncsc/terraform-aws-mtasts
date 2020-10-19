@@ -18,8 +18,8 @@ module "mtastspolicy_examplecom" {
   zone_id         = "Z00AAAAAAA0A0A"            // Optional - If not specified then it will run in mode 2
   domain          = "example.com"
   mx              = ["mail.example.com"]        // Optional - default looks up MX records for the domain in DNS 
-  mode            = "testing"                   // Optional  - default is testing
-  reporting_email = "tlsreporting@example.com"  // Optional - default is no TLS RPT entry
+  mode            = "testing"                   // Optional - default is testing
+  reporting_email = "tlsreporting@example.com"  // Optional - default is no TLS-RPT entry
 }
 ```
 
@@ -30,9 +30,10 @@ module "mtastspolicy_examplecom" {
   source          = "github.com/ukncsc/terraform-aws-mtasts"
   domain          = "example.com"
   mx              = ["mail.example.com"]        // Optional - default looks up MX records for the domain in DNS 
-  mode            = "testing"                   // Optional  - default is testing
-  reporting_email = "tlsreporting@example.com"  // Optional
-  delegated = false // Change this to true once the new zones are delegated from your domain
+  mode            = "testing"                   // Optional - default is testing
+  reporting_email = "tlsreporting@example.com"  // Optional - default is no TLS-RPT entry or zone
+  delegated = false                             // Optional - default is false. Change this to true once the new zones are delegated from your domain
 }
 ```
+When running in Mode 2, the zone delegation instructions are shown after a terraform apply in the Instructions output variable
 
