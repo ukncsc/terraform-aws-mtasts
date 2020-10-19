@@ -1,6 +1,7 @@
 variable "zone_id" {
   type        = string
   description = "Route53 zone hosting the domain MTA-STS/TLS-RPT is being deployed for."
+  default = ""
 }
 
 variable "domain" {
@@ -35,4 +36,10 @@ variable "tags" {
   type        = map(string)
   default     = {}
   description = "(Optional) tags to apply to underlying resources"
+}
+
+variable "delegated" {
+  type = bool
+  default = false
+  description = "Set to true after the route53 zones have been delegated from the main domains so that certificate validation can succeed"
 }

@@ -6,7 +6,11 @@ This consists of using AWS API Gateway with a Custom Domain to host the MTA-STS 
 
 ## How to use this Module
 
-This module assumes AWS Account with access to Route53, API Gateway, and ACM, which also hosts the DNS (in Route53) for the domain you wish to deploy MTA-STS/TLS-RPT.
+This module assumes AWS Account with access to Route53, API Gateway, and ACM.
+
+It can be used in two modes:
+
+1) If the domain onto which you wish to deploy MTA-STS/TLS-RPT is hosted in Route53 and this account has access:
 
 ```terraform
 module "mtastspolicy_examplecom" {
@@ -15,6 +19,19 @@ module "mtastspolicy_examplecom" {
   domain          = "example.com"
   mx              = ["mail.example.com"]
   mode            = "testing"
-  reporting_email = "tlsreporting@example.com"
+  reporting_email = "tlsreporting@example.com" // Optional
+}
+```
+
+2) If the domain onto which you wish to deploy MTA-STS/TLS-RPT is hosted elsewhere and you would like to delegate to new zones in Route53:
+   
+```terraform
+  module "mtastspolicy_examplecom" {
+  source          = "github.com/ukncsc/terraform-aws-mtasts"
+  domain          = "example.com"
+  mx              = ["mail.example.com"]
+  mode            = "testing"
+  reporting_email = "tlsreporting@example.com" // Optional
+  delegated = false // Change this to true once the new zones are delegated from your domain
 }
 ```

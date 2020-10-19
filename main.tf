@@ -1,5 +1,8 @@
 locals {
   policydomain = "mta-sts.${var.domain}"
+  mta-sts-record = "_mta-sts.${var.domain}"
+  tls-rpt-record = "_smtp._tls.${var.domain}"
+
   policyhash   = md5(format("%s%s%s", join("", var.mx), var.mode, var.max_age))
 }
 
@@ -9,21 +12,48 @@ resource "aws_acm_certificate" "cert" {
   tags              = var.tags
 }
 
+
+
 data "aws_route53_zone" "zone" {
+    count = length(var.zone_id) >0 ? 1:0
   zone_id = var.zone_id
 }
 
+resource "aws_route53_zone" "mta-sts-policy-zone" {
+    count = length(var.zone_id) == 0 ? 1:0
+  name = local.policydomain
+}
+resource "aws_route53_zone" "mta-sts-record-zone" {
+    count = length(var.zone_id) == 0 ? 1:0
+  name = local.mta-sts-record
+}
+resource "aws_route53_zone" "tls-reporting-zone" {
+  count   = length(var.zone_id) == 0 && length(var.reporting_email) > 0  ? 1 : 0
+name = local.tls-rpt-record
+}
+
+
+
 resource "aws_route53_record" "cert_validation" {
-  name    = aws_acm_certificate.cert.domain_validation_options[0].resource_record_name
-  type    = aws_acm_certificate.cert.domain_validation_options[0].resource_record_type
-  zone_id = data.aws_route53_zone.zone.id
-  records = [aws_acm_certificate.cert.domain_validation_options[0].resource_record_value]
+  for_each = {
+    for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
+  name    = dvo.resource_record_name
+  type    = dvo.resource_record_type
+  record = dvo.resource_record_value
+    }
+  }
+  allow_overwrite = true
+  name = each.value.name
+  records = [each.value.record]
+  type = each.value.type
+  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-policy-zone.*.id),0)
   ttl     = 60
 }
 
 resource "aws_acm_certificate_validation" "cert" {
+  count = length(var.zone_id) > 0 || var.delegated ? 1:0
   certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [aws_route53_record.cert_validation.fqdn]
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation: record.fqdn]
 }
 
 resource "aws_api_gateway_rest_api" "mtastspolicyapi" {
@@ -115,8 +145,9 @@ resource "aws_api_gateway_deployment" "deployment" {
 }
 
 resource "aws_api_gateway_domain_name" "domain" {
+  count = length(var.zone_id) > 0 || var.delegated ? 1:0
   domain_name              = local.policydomain
-  regional_certificate_arn = aws_acm_certificate_validation.cert.certificate_arn
+  regional_certificate_arn = join("",aws_acm_certificate_validation.cert.*.certificate_arn)
 
   endpoint_configuration {
     types = ["REGIONAL"]
@@ -124,26 +155,28 @@ resource "aws_api_gateway_domain_name" "domain" {
 }
 
 resource "aws_api_gateway_base_path_mapping" "basepathmapping" {
+  count  = 0
   api_id      = aws_api_gateway_rest_api.mtastspolicyapi.id
   stage_name  = aws_api_gateway_deployment.deployment.stage_name
-  domain_name = aws_api_gateway_domain_name.domain.domain_name
+  domain_name = join("",aws_api_gateway_domain_name.domain.*.domain_name)
 }
 
 resource "aws_route53_record" "apigatewaypointer" {
-  name    = aws_api_gateway_domain_name.domain.domain_name
+  count = length(var.zone_id) > 0 || var.delegated ? 1:0
+  name    = join("",flatten(aws_api_gateway_domain_name.domain.*.domain_name))
   type    = "A"
-  zone_id = data.aws_route53_zone.zone.id
+  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-policy-zone.*.id),0)
 
   alias {
     evaluate_target_health = true
-    name                   = aws_api_gateway_domain_name.domain.regional_domain_name
-    zone_id                = aws_api_gateway_domain_name.domain.regional_zone_id
+    name                   = join("", flatten(aws_api_gateway_domain_name.domain.*.regional_domain_name))
+    zone_id                = join("", flatten(aws_api_gateway_domain_name.domain.*.regional_zone_id))
   }
 }
 
 resource "aws_route53_record" "smtptlsreporting" {
-  zone_id = data.aws_route53_zone.zone.id
-  name    = "_smtp._tls.${var.domain}"
+  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.tls-reporting-zone.*.id),0)
+  name    = local.tls-rpt-record
   type    = "TXT"
   ttl     = "300"
   count   = length(var.reporting_email) > 0 ? 1 : 0
@@ -154,7 +187,7 @@ resource "aws_route53_record" "smtptlsreporting" {
 }
 
 resource "aws_route53_record" "mtastspolicydns" {
-  zone_id = data.aws_route53_zone.zone.id
+  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-record-zone.*.id),0)
   name    = "_mta-sts.${var.domain}"
   type    = "TXT"
   ttl     = "300"
