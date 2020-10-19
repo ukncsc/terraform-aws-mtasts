@@ -1,5 +1,5 @@
 data "template_file" "instructions_template" {
-  count  = var.delegated ? 0:1
+  count  = var.delegated || length(var.zone_id) >0 ? 0:1
   template = <<EOF
 
 Create the following NS entries in your $${domain} zone:
