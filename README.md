@@ -15,11 +15,11 @@ It can be used in two modes:
 ```terraform
 module "mtastspolicy_examplecom" {
   source          = "github.com/ukncsc/terraform-aws-mtasts"
-  zone_id         = "Z00AAAAAAA0A0A"
+  zone_id         = "Z00AAAAAAA0A0A"            // Optional - If not specified then it will run in mode 2
   domain          = "example.com"
-  mx              = ["mail.example.com"]
-  mode            = "testing"
-  reporting_email = "tlsreporting@example.com" // Optional
+  mx              = ["mail.example.com"]        // Optional - default looks up MX records for the domain in DNS 
+  mode            = "testing"                   // Optional  - default is testing
+  reporting_email = "tlsreporting@example.com"  // Optional - default is no TLS RPT entry
 }
 ```
 
@@ -29,9 +29,10 @@ module "mtastspolicy_examplecom" {
   module "mtastspolicy_examplecom" {
   source          = "github.com/ukncsc/terraform-aws-mtasts"
   domain          = "example.com"
-  mx              = ["mail.example.com"]
-  mode            = "testing"
-  reporting_email = "tlsreporting@example.com" // Optional
+  mx              = ["mail.example.com"]        // Optional - default looks up MX records for the domain in DNS 
+  mode            = "testing"                   // Optional  - default is testing
+  reporting_email = "tlsreporting@example.com"  // Optional
   delegated = false // Change this to true once the new zones are delegated from your domain
 }
 ```
+
