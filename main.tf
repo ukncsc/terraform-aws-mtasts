@@ -4,6 +4,11 @@ locals {
   tls-rpt-record = "_smtp._tls.${var.domain}"
 
   policyhash   = md5(format("%s%s%s", join("", var.mx), var.mode, var.max_age))
+  mxlist = (length(var.mx) > 0 ? var.mx : data.dns_mx_record_set.mx.mx.*.exchange)
+  formattedmxlist = [
+  for mx in local.mxlist: 
+  "mx: ${trimsuffix(mx,".")}"
+  ]
 }
 
 resource "aws_acm_certificate" "cert" {
@@ -108,6 +113,10 @@ resource "aws_api_gateway_method_response" "twohundred" {
   status_code = "200"
 }
 
+data "dns_mx_record_set" "mx" {
+  domain = var.domain
+}
+
 resource "aws_api_gateway_integration_response" "integrationresponse" {
   rest_api_id = aws_api_gateway_rest_api.mtastspolicyapi.id
   resource_id = aws_api_gateway_resource.policyresource.id
@@ -120,7 +129,8 @@ resource "aws_api_gateway_integration_response" "integrationresponse" {
 #set($context.responseOverride.header.Content-Type='text/plain')
 version: STSv1
 mode: ${var.mode}
-${join("", formatlist("mx: %s\n", var.mx))}max_age: ${var.max_age}
+${join("\n",local.formattedmxlist)}
+max_age: ${var.max_age}
 EOF
 
   }

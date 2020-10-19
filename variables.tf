@@ -24,6 +24,7 @@ variable "max_age" {
 variable "mx" {
   type        = list(string)
   description = "'mx' value for MTA-STS policy. List of MX hostnames to be included in MTA-STS policy"
+  default = []
 }
 
 variable "reporting_email" {
