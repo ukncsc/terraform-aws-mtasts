@@ -4,7 +4,14 @@ locals {
   tls-rpt-cname-record = "_smtp._tls.${var.domain}"
   mta-sts-record = "_mta-sts.mta-sts.${var.domain}"
   tls-rpt-record = "_smtp._tls.mta-sts.${var.domain}"
-
+  mta-sts-record-value = "v=STSv1; id=${local.policyhash}"
+  tls-rpt-record-value = "v=TLSRPTv1;rua=mailto:${var.reporting_email}"
+  policy =  <<EOF
+version: STSv1
+mode: ${var.mode}
+${join("\n",local.formattedmxlist)}
+max_age: ${var.max_age}
+EOF
   policyhash   = md5(format("%s%s%s", join("", var.mx), var.mode, var.max_age))
   mxlist = (length(var.mx) > 0 ? var.mx : data.dns_mx_record_set.mx.mx.*.exchange)
   formattedmxlist = [
@@ -122,10 +129,7 @@ resource "aws_api_gateway_integration_response" "integrationresponse" {
   response_templates = {
     "text/plain" = <<EOF
 #set($context.responseOverride.header.Content-Type='text/plain')
-version: STSv1
-mode: ${var.mode}
-${join("\n",local.formattedmxlist)}
-max_age: ${var.max_age}
+${local.policy}
 EOF
 
   }
@@ -187,7 +191,7 @@ resource "aws_route53_record" "smtptlsreporting" {
   count   = length(var.reporting_email) > 0 ? 1 : 0
 
   records = [
-    "v=TLSRPTv1;rua=mailto:${var.reporting_email}",
+    local.tls-rpt-record-value
   ]
 }
 
@@ -198,7 +202,7 @@ resource "aws_route53_record" "mtastspolicydns" {
   ttl     = "300"
 
   records = [
-    "v=STSv1; id=${local.policyhash}",
+    local.mta-sts-record-value
   ]
 }
 

@@ -24,7 +24,50 @@ Once the delegation is complete set the variable delegated = true
   }
 }
 
-output "Instructions" {
-    value = join("",flatten(data.template_file.instructions_template.*.rendered))
+data "template_file" "details_template" {
+  count  =  var.delegated || length(var.zone_id) >0 ? 1:0
+  template = <<EOF
+
+DNS Records:
+$${mta-sts-delegation}
+$${tls-rpt-delegation}
+$${mta-sts-ns-delegation}
+
+MTA-STS Policy:
+$${policy}
+
+$${mta-sts}
+
+$${tls-rpt}
+  EOF
+  vars = {
+    domain = var.domain
+    policy = local.policy
+    mta-sts = "${local.mta-sts-cname-record} record value:\n${local.mta-sts-record-value}"
+    tls-rpt = length(var.reporting_email) > 0 ? "${local.tls-rpt-cname-record} record value:\n${local.tls-rpt-record-value}" : ""
+    mta-sts-delegation = "${local.mta-sts-cname-record} CNAME ${join("",data.dns_cname_record_set._mta-sts.*.cname)}"
+    tls-rpt-delegation = "${local.tls-rpt-cname-record} CNAME ${join("",data.dns_cname_record_set.tls-rpt.*.cname)}"
+    mta-sts-ns-delegation = "${local.policydomain} NS ${join(",",flatten(data.dns_ns_record_set.mta-sts.*.nameservers))}"
+
+  }
 }
 
+
+output "output" {
+    value = join("",flatten((concat(data.template_file.details_template.*.rendered,data.template_file.instructions_template.*.rendered))))
+}
+
+data "dns_cname_record_set" "_mta-sts" {
+  count  =  var.delegated ? 1:0
+  host = local.mta-sts-cname-record
+}
+
+data "dns_cname_record_set" "tls-rpt" {
+  count  =  var.delegated ? 1:0
+  host = local.tls-rpt-cname-record
+}
+
+data "dns_ns_record_set" "mta-sts" {
+  count  =  var.delegated ? 1:0
+  host = local.policydomain
+}
