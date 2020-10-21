@@ -1,7 +1,9 @@
 locals {
   policydomain = "mta-sts.${var.domain}"
-  mta-sts-record = "_mta-sts.${var.domain}"
-  tls-rpt-record = "_smtp._tls.${var.domain}"
+  mta-sts-cname-record = "_mta-sts.${var.domain}"
+  tls-rpt-cname-record = "_smtp._tls.${var.domain}"
+  mta-sts-record = "_mta-sts.mta-sts.${var.domain}"
+  tls-rpt-record = "_smtp._tls.mta-sts.${var.domain}"
 
   policyhash   = md5(format("%s%s%s", join("", var.mx), var.mode, var.max_age))
   mxlist = (length(var.mx) > 0 ? var.mx : data.dns_mx_record_set.mx.mx.*.exchange)
@@ -24,17 +26,10 @@ data "aws_route53_zone" "zone" {
   zone_id = var.zone_id
 }
 
-resource "aws_route53_zone" "mta-sts-policy-zone" {
+
+resource "aws_route53_zone" "mta-sts-zone" {
     count = length(var.zone_id) == 0 ? 1:0
   name = local.policydomain
-}
-resource "aws_route53_zone" "mta-sts-record-zone" {
-    count = length(var.zone_id) == 0 ? 1:0
-  name = local.mta-sts-record
-}
-resource "aws_route53_zone" "tls-reporting-zone" {
-  count   = length(var.zone_id) == 0 && length(var.reporting_email) > 0  ? 1 : 0
-name = local.tls-rpt-record
 }
 
 
@@ -51,7 +46,7 @@ resource "aws_route53_record" "cert_validation" {
   name = each.value.name
   records = [each.value.record]
   type = each.value.type
-  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-policy-zone.*.id),0)
+  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-zone.*.id),0)
   ttl     = 60
 }
 
@@ -175,7 +170,7 @@ resource "aws_route53_record" "apigatewaypointer" {
   count = length(var.zone_id) > 0 || var.delegated ? 1:0
   name    = join("",flatten(aws_api_gateway_domain_name.domain.*.domain_name))
   type    = "A"
-  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-policy-zone.*.id),0)
+  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-zone.*.id),0)
 
   alias {
     evaluate_target_health = true
@@ -185,7 +180,7 @@ resource "aws_route53_record" "apigatewaypointer" {
 }
 
 resource "aws_route53_record" "smtptlsreporting" {
-  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.tls-reporting-zone.*.id),0)
+  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-zone.*.id),0)
   name    = local.tls-rpt-record
   type    = "TXT"
   ttl     = "300"
@@ -197,8 +192,8 @@ resource "aws_route53_record" "smtptlsreporting" {
 }
 
 resource "aws_route53_record" "mtastspolicydns" {
-  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-record-zone.*.id),0)
-  name    = "_mta-sts.${var.domain}"
+  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-zone.*.id),0)
+  name    = local.mta-sts-record
   type    = "TXT"
   ttl     = "300"
 
