@@ -39,6 +39,12 @@ variable "tags" {
   description = "(Optional) tags to apply to underlying resources"
 }
 
+variable "create-subdomain" {
+    description = "If set to false when a zone_id is not specified, the mta-sts subdomain will not be created, and the plan will fail if it has not been created previously in Route53"
+    type = bool
+    default = true
+}
+
 variable "delegated" {
   type = bool
   default = false

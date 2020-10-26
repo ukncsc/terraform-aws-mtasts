@@ -6,6 +6,8 @@ locals {
   tls-rpt-record = "_smtp._tls.mta-sts.${var.domain}"
   mta-sts-record-value = "v=STSv1; id=${local.policyhash}"
   tls-rpt-record-value = "v=TLSRPTv1;rua=mailto:${var.reporting_email}"
+  route53_zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-zone.*.id,data.aws_route53_zone.zone.*.id),0)
+
   policy =  <<EOF
 version: STSv1
 mode: ${var.mode}
@@ -29,17 +31,20 @@ resource "aws_acm_certificate" "cert" {
 
 
 data "aws_route53_zone" "zone" {
-    count = length(var.zone_id) >0 ? 1:0
+   count = length(var.zone_id) >0 ? 1:0
   zone_id = var.zone_id
 }
 
 
 resource "aws_route53_zone" "mta-sts-zone" {
-    count = length(var.zone_id) == 0 ? 1:0
+  count = length(var.zone_id) == 0 && var.create_subdomain ? 1:0
   name = local.policydomain
 }
 
-
+data "aws_route53_zone" "mta-sts-zone" {
+  count = length(var.zone_id) >0  && !var.create_subdomain ? 1:0
+  name = local.policydomain
+}
 
 resource "aws_route53_record" "cert_validation" {
   for_each = {
@@ -174,7 +179,7 @@ resource "aws_route53_record" "apigatewaypointer" {
   count = length(var.zone_id) > 0 || var.delegated ? 1:0
   name    = join("",flatten(aws_api_gateway_domain_name.domain.*.domain_name))
   type    = "A"
-  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-zone.*.id),0)
+  zone_id = local.route53_zone_id
 
   alias {
     evaluate_target_health = true
@@ -184,7 +189,7 @@ resource "aws_route53_record" "apigatewaypointer" {
 }
 
 resource "aws_route53_record" "smtptlsreporting" {
-  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-zone.*.id),0)
+  zone_id = local.route53_zone_id
   name    = local.tls-rpt-record
   type    = "TXT"
   ttl     = "300"
@@ -196,7 +201,7 @@ resource "aws_route53_record" "smtptlsreporting" {
 }
 
 resource "aws_route53_record" "mtastspolicydns" {
-  zone_id = element(concat(data.aws_route53_zone.zone.*.id,aws_route53_zone.mta-sts-zone.*.id),0)
+  zone_id = local.route53_zone_id
   name    = local.mta-sts-record
   type    = "TXT"
   ttl     = "300"
