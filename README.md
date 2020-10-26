@@ -99,5 +99,5 @@ If you change delegated=true before following the instructions and fully delegat
 
 Specifying MX is optional, if they are retrieved from DNS you MUST check your policy to ensure the correct values were populated.
 
-If a negative DNS result is cached due to delays updating the delegated zone then you may need to clear the local dns cache e.g. using ipconfig /flushdns on windows.
+If a negative DNS result is cached due to delays updating the delegated zone then you could try clearing the local dns cache e.g. using ipconfig /flushdns on windows, wait a while, or set dns-delegation-checks to false to disable these checks.
 

@@ -1,5 +1,5 @@
 module "mtastspolicy_examplecom" {
-  source          = "github.com/ukncsc/terraform-aws-mtasts"
+  source          = "github.com/ukncsc/terraform-aws-mtasts/mta-sts-module"
   domain          = "example.com"
   mx              = ["mail.example.com"]        // Optional - default looks up MX records for the domain in DNS 
   mode            = "testing"                   // Optional - default is testing

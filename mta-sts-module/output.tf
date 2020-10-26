@@ -58,16 +58,16 @@ output "output" {
 }
 
 data "dns_cname_record_set" "_mta-sts" {
-  count  =  var.delegated ? 1:0
+  count  =  var.delegated && var.dns-delegation-checks ? 1:0
   host = local.mta-sts-cname-record
 }
 
 data "dns_cname_record_set" "tls-rpt" {
-  count  =  var.delegated ? 1:0
+  count  =  length(var.reporting_email) > 0 && var.delegated && var.dns-delegation-checks ? 1:0
   host = local.tls-rpt-cname-record
 }
 
 data "dns_ns_record_set" "mta-sts" {
-  count  =  var.delegated ? 1:0
+  count  =  var.delegated && var.dns-delegation-checks ? 1:0
   host = local.policydomain
 }

@@ -29,7 +29,6 @@ resource "aws_acm_certificate" "cert" {
 }
 
 
-
 data "aws_route53_zone" "zone" {
    count = length(var.zone_id) >0 ? 1:0
   zone_id = var.zone_id
@@ -37,12 +36,12 @@ data "aws_route53_zone" "zone" {
 
 
 resource "aws_route53_zone" "mta-sts-zone" {
-  count = length(var.zone_id) == 0 && var.create_subdomain ? 1:0
+  count = length(var.zone_id) == 0 && var.create-subdomain ? 1:0
   name = local.policydomain
 }
 
 data "aws_route53_zone" "mta-sts-zone" {
-  count = length(var.zone_id) >0  && !var.create_subdomain ? 1:0
+  count = length(var.zone_id) >0  && !var.create-subdomain ? 1:0
   name = local.policydomain
 }
 
