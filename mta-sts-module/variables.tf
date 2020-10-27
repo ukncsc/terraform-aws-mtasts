@@ -1,6 +1,7 @@
 variable "zone_id" {
   type        = string
   description = "Route53 zone hosting the domain MTA-STS/TLS-RPT is being deployed for."
+  default = ""
 }
 
 variable "domain" {
@@ -23,6 +24,7 @@ variable "max_age" {
 variable "mx" {
   type        = list(string)
   description = "'mx' value for MTA-STS policy. List of MX hostnames to be included in MTA-STS policy"
+  default = []
 }
 
 variable "reporting_email" {
@@ -35,4 +37,22 @@ variable "tags" {
   type        = map(string)
   default     = {}
   description = "(Optional) tags to apply to underlying resources"
+}
+
+variable "create-subdomain" {
+    description = "If set to false when a zone_id is not specified, the mta-sts subdomain will not be created, and the plan will fail if it has not been created previously in Route53"
+    type = bool
+    default = true
+}
+
+variable "delegated" {
+  type = bool
+  default = false
+  description = "Set to true after the route53 zones have been delegated from the main domains so that certificate validation can succeed"
+}
+
+variable "dns-delegation-checks" {
+  description = "Set to false to disable DNS record checks before the second stage apply"
+  type = bool
+  default = true
 }
