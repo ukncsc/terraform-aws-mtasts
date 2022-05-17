@@ -18,3 +18,18 @@ module "mtastspolicy_examplecom" {
   reporting_email = "tlsreporting@example.com"
 }
 ```
+
+## Pre-existing SMTP records
+
+When consuming this module for an email domain that already has TLS enabled, there is a good chance the resource below will have already been created:
+
+```terraform
+resource "aws_route53_record" "smtptlsreporting" {
+  ...
+}
+```
+
+In order to resolve this, please import the existing Route53 record into the remote state of the repo that is consuming this module.
+
+*Please note: the ability to destroy this particular record has been disabled as it could lead to this module destroying pre-existing SMTP records*
+*If you wish to destroy certain instances of MTA-STS, please remove the SMTP record from the state before running destroy*

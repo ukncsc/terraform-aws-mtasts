@@ -134,6 +134,7 @@ resource "aws_route53_record" "cloudfrontalias" {
   }
 }
 
+# This resource may already exist, please import it into the state of the repo that consumes this module
 resource "aws_route53_record" "smtptlsreporting" {
   zone_id = data.aws_route53_zone.zone.id
   name    = "_smtp._tls.${var.domain}"
@@ -144,6 +145,10 @@ resource "aws_route53_record" "smtptlsreporting" {
   records = [
     "v=TLSRPTv1;rua=mailto:${var.reporting_email}",
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_route53_record" "mtastspolicydns" {
