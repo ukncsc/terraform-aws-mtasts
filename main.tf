@@ -6,11 +6,6 @@ locals {
   bucketname   = "mta-sts.${data.aws_caller_identity.current.account_id}.${var.domain}"
 }
 
-provider "aws" {
-  alias  = "useast1"
-  region = "us-east-1"
-}
-
 resource "aws_acm_certificate" "cert" {
   domain_name       = local.policydomain
   validation_method = "DNS"
