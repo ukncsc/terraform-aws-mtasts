@@ -1,3 +1,9 @@
+variable "cf_price_class" {
+  type        = string
+  default     = "PriceClass_100"
+  description = "The price class for the MTA STS CloudFront distribution. Options: PriceClass_100 (North America and Europe), PriceClass_200 (North America, Europe, Asia, Middle East, and Africa) or PriceClass_All (all edge locations)."
+}
+
 variable "domain" {
   type        = string
   description = "The domain MTA-STS/TLS-RPT is being deployed for."

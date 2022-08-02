@@ -69,10 +69,11 @@ EOF
 }
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
-  aliases  = [local.policydomain]
-  enabled  = true
-  tags     = local.tags
-  provider = aws.account
+  aliases     = [local.policydomain]
+  enabled     = true
+  price_class = var.cf_price_class
+  tags        = local.tags
+  provider    = aws.account
 
   origin {
     domain_name = aws_s3_bucket.policybucket.bucket_regional_domain_name
