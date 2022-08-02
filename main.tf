@@ -45,6 +45,7 @@ resource "aws_acm_certificate_validation" "cert" {
 
 resource "aws_s3_bucket" "policybucket" {
   bucket   = local.bucketname
+  tags     = local.tags
   provider = aws.account
 }
 
@@ -63,11 +64,16 @@ mode: ${var.mode}
 ${join("", formatlist("mx: %s\n", var.mx))}max_age: ${var.max_age}
 EOF
   content_type = "text/plain"
+  tags         = local.tags
   provider     = aws.account
 }
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
+  aliases  = [local.policydomain]
+  enabled  = true
+  tags     = local.tags
   provider = aws.account
+
   origin {
     domain_name = aws_s3_bucket.policybucket.bucket_regional_domain_name
     origin_id   = local.s3_origin_id
@@ -76,9 +82,6 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       origin_access_identity = aws_cloudfront_origin_access_identity.policybucketoai.cloudfront_access_identity_path
     }
   }
-  enabled = true
-
-  aliases = [local.policydomain]
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
