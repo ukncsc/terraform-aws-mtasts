@@ -58,11 +58,13 @@ resource "aws_s3_bucket_acl" "policybucket_acl" {
 resource "aws_s3_object" "mtastspolicyfile" {
   key          = ".well-known/mta-sts.txt"
   bucket       = aws_s3_bucket.policybucket.id
-  content      = <<EOF
-version: STSv1
-mode: ${var.mode}
-${join("", formatlist("mx: %s\n", var.mx))}max_age: ${var.max_age}
-EOF
+  content      = templatefile("${path.module}/mta-sts.templatefile",
+    {
+      max_age  = var.max_age
+      mode     = var.mode
+      mx_lines = join("\n", formatlist("mx: %s", var.mx))
+    }
+  )
   content_type = "text/plain"
   tags         = local.tags
   provider     = aws.account
