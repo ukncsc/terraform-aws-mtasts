@@ -16,15 +16,17 @@ resource "aws_acm_certificate" "cert" {
 }
 
 data "aws_route53_zone" "zone" {
-  zone_id = var.zone_id
+  zone_id  = var.zone_id
+  provider = aws.useast1
 }
 
 resource "aws_route53_record" "cert_validation" {
-  name    = tolist(aws_acm_certificate.cert.domain_validation_options)[0].resource_record_name
-  type    = tolist(aws_acm_certificate.cert.domain_validation_options)[0].resource_record_type
-  zone_id = data.aws_route53_zone.zone.id
-  records = [tolist(aws_acm_certificate.cert.domain_validation_options)[0].resource_record_value]
-  ttl     = 60
+  name     = tolist(aws_acm_certificate.cert.domain_validation_options)[0].resource_record_name
+  type     = tolist(aws_acm_certificate.cert.domain_validation_options)[0].resource_record_type
+  zone_id  = data.aws_route53_zone.zone.id
+  records  = [tolist(aws_acm_certificate.cert.domain_validation_options)[0].resource_record_value]
+  ttl      = 60
+  provider = aws.useast1
 }
 
 resource "aws_acm_certificate_validation" "cert" {
@@ -34,8 +36,9 @@ resource "aws_acm_certificate_validation" "cert" {
 }
 
 resource "aws_s3_bucket" "policybucket" {
-  bucket = local.bucketname
-  acl    = "private"
+  bucket   = local.bucketname
+  acl      = "private"
+  provider = aws.account
 }
 
 resource "aws_s3_bucket_object" "mtastspolicyfile" {
@@ -47,6 +50,7 @@ mode: ${var.mode}
 ${join("", formatlist("mx: %s\n", var.mx))}max_age: ${var.max_age}
 EOF
   content_type = "text/plain"
+  provider     = aws.account
 }
 
 locals {
@@ -54,6 +58,7 @@ locals {
 }
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
+  provider = aws.account
   origin {
     domain_name = aws_s3_bucket.policybucket.bucket_regional_domain_name
     origin_id   = local.s3_origin_id
@@ -99,10 +104,12 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 }
 
 resource "aws_cloudfront_origin_access_identity" "policybucketoai" {
-  comment = "OAI for MTA-STS policy bucket (${var.domain})"
+  comment  = "OAI for MTA-STS policy bucket (${var.domain})"
+  provider = aws.account
 }
 
 data "aws_iam_policy_document" "s3_policy" {
+  provider = aws.account
   statement {
     actions   = ["s3:GetObject"]
     resources = ["${aws_s3_bucket.policybucket.arn}/*"]
@@ -115,14 +122,16 @@ data "aws_iam_policy_document" "s3_policy" {
 }
 
 resource "aws_s3_bucket_policy" "policybucketpolicy" {
-  bucket = aws_s3_bucket.policybucket.id
-  policy = data.aws_iam_policy_document.s3_policy.json
+  bucket   = aws_s3_bucket.policybucket.id
+  policy   = data.aws_iam_policy_document.s3_policy.json
+  provider = aws.account
 }
 
 resource "aws_route53_record" "cloudfrontalias" {
-  name    = local.policydomain
-  type    = "A"
-  zone_id = data.aws_route53_zone.zone.id
+  name     = local.policydomain
+  type     = "A"
+  zone_id  = data.aws_route53_zone.zone.id
+  provider = aws.account
 
   alias {
     evaluate_target_health = true
@@ -132,11 +141,12 @@ resource "aws_route53_record" "cloudfrontalias" {
 }
 
 resource "aws_route53_record" "smtptlsreporting" {
-  zone_id = data.aws_route53_zone.zone.id
-  name    = "_smtp._tls.${var.domain}"
-  type    = "TXT"
-  ttl     = "300"
-  count   = length(var.reporting_email) > 0 ? 1 : 0
+  zone_id  = data.aws_route53_zone.zone.id
+  name     = "_smtp._tls.${var.domain}"
+  type     = "TXT"
+  ttl      = "300"
+  count    = length(var.reporting_email) > 0 ? 1 : 0
+  provider = aws.account
 
   records = [
     "v=TLSRPTv1;rua=mailto:${var.reporting_email}",
@@ -144,10 +154,11 @@ resource "aws_route53_record" "smtptlsreporting" {
 }
 
 resource "aws_route53_record" "mtastspolicydns" {
-  zone_id = data.aws_route53_zone.zone.id
-  name    = "_mta-sts.${var.domain}"
-  type    = "TXT"
-  ttl     = "300"
+  zone_id  = data.aws_route53_zone.zone.id
+  name     = "_mta-sts.${var.domain}"
+  type     = "TXT"
+  ttl      = "300"
+  provider = aws.account
 
   records = [
     "v=STSv1; id=${local.policyhash}",
