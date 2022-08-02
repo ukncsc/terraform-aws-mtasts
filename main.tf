@@ -7,12 +7,19 @@ locals {
   policydomain = "mta-sts.${var.domain}"
   policyhash   = md5(format("%s%s%s", join("", var.mx), var.mode, var.max_age))
   s3_origin_id = "myS3Origin"
+  tags         = merge(
+    {
+      "Service" = "MTA-STS"
+      "Domain"  = var.domain
+    },
+    var.tags
+  )
 }
 
 resource "aws_acm_certificate" "cert" {
   domain_name       = local.policydomain
   validation_method = "DNS"
-  tags              = var.tags
+  tags              = local.tags
   provider          = aws.useast1
 }
 
