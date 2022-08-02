@@ -46,7 +46,7 @@ resource "aws_s3_bucket_acl" "policybucket_acl" {
   provider = aws.account
 }
 
-resource "aws_s3_bucket_object" "mtastspolicyfile" {
+resource "aws_s3_object" "mtastspolicyfile" {
   key          = ".well-known/mta-sts.txt"
   bucket       = aws_s3_bucket.policybucket.id
   content      = <<EOF
