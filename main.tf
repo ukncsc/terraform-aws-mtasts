@@ -37,6 +37,11 @@ resource "aws_acm_certificate_validation" "cert" {
 
 resource "aws_s3_bucket" "policybucket" {
   bucket   = local.bucketname
+  provider = aws.account
+}
+
+resource "aws_s3_bucket_acl" "policybucket_acl" {
+  bucket   = aws_s3_bucket.policybucket.id
   acl      = "private"
   provider = aws.account
 }
