@@ -72,6 +72,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   aliases     = [local.policydomain]
   enabled     = true
   price_class = var.cf_price_class
+  web_acl_id  = var.cf_waf_web_acl
   tags        = local.tags
   provider    = aws.account
 

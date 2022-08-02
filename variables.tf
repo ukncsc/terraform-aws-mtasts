@@ -4,6 +4,12 @@ variable "cf_price_class" {
   description = "The price class for the MTA STS CloudFront distribution. Options: PriceClass_100 (North America and Europe), PriceClass_200 (North America, Europe, Asia, Middle East, and Africa) or PriceClass_All (all edge locations)."
 }
 
+variable "cf_waf_web_acl" {
+  type        = string
+  default     = null
+  description = "AWS WAF web ACL to associate with the CloudFront distribution."
+}
+
 variable "domain" {
   type        = string
   description = "The domain MTA-STS/TLS-RPT is being deployed for."
