@@ -16,7 +16,7 @@ resource "aws_acm_certificate" "cert" {
 }
 
 data "aws_route53_zone" "zone" {
-  zone_id  = var.zone_id
+  name     = var.domain
   provider = aws.useast1
 }
 

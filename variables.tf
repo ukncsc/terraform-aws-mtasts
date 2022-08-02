@@ -1,8 +1,3 @@
-variable "zone_id" {
-  type        = string
-  description = "Route53 zone hosting the domain MTA-STS/TLS-RPT is being deployed for."
-}
-
 variable "domain" {
   type        = string
   description = "The domain MTA-STS/TLS-RPT is being deployed for."

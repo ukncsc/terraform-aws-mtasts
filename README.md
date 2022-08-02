@@ -11,7 +11,6 @@ This module assumes AWS Account with access to Route53, CloudFront, S3, and ACM,
 ```terraform
 module "mtastspolicy_examplecom" {
   source          = "github.com/ukncsc/terraform-aws-mtasts"
-  zone_id         = "Z00AAAAAAA0A0A"
   domain          = "example.com"
   mx              = ["mail.example.com"]
   mode            = "testing"
