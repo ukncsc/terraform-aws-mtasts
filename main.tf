@@ -3,9 +3,10 @@ data "aws_caller_identity" "current" {
 }
 
 locals {
+  bucketname   = "mta-sts.${data.aws_caller_identity.current.account_id}.${var.domain}"
   policydomain = "mta-sts.${var.domain}"
   policyhash   = md5(format("%s%s%s", join("", var.mx), var.mode, var.max_age))
-  bucketname   = "mta-sts.${data.aws_caller_identity.current.account_id}.${var.domain}"
+  s3_origin_id = "myS3Origin"
 }
 
 resource "aws_acm_certificate" "cert" {
@@ -56,10 +57,6 @@ ${join("", formatlist("mx: %s\n", var.mx))}max_age: ${var.max_age}
 EOF
   content_type = "text/plain"
   provider     = aws.account
-}
-
-locals {
-  s3_origin_id = "myS3Origin"
 }
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
