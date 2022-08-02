@@ -3,7 +3,7 @@ data "aws_caller_identity" "current" {}
 locals {
   policydomain = "mta-sts.${var.domain}"
   policyhash   = md5(format("%s%s%s", join("", var.mx), var.mode, var.max_age))
-  bucketname   = "${data.aws_caller_identity.current.account_id}.${var.domain}"
+  bucketname   = "mta-sts.${data.aws_caller_identity.current.account_id}.${var.domain}"
 }
 
 provider "aws" {
