@@ -1,0 +1,4 @@
+version: STSv1
+mode: ${mode}
+${mx_lines}
+max_age: ${max_age}
